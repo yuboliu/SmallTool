@@ -1,26 +1,34 @@
 # SmallTool
 
-网络运维小工具合集。本项目由以下两个仓库合并重构而来：
+网络运维小工具合集。本项目由以下项目合并重构而来：
 
 - f5-conf-to-csv（已合并至此仓库）
 - Horizon-ADP_Conf-To-Excel（已合并至此仓库）
+- FWConfigParse（已合并至此仓库）
+- Subnet Segment Generation（已合并至此仓库）
 
 ## 目录结构
 
 ```
 SmallTool/
-├── LB/                          # 负载均衡相关工具
+├── LB/                          # 负载均衡配置工具
 │   ├── common/                  # 公共库：配置块解析器、Excel 输出
 │   ├── f5_conf_to_csv/          # F5 BIG-IP LTM 配置 → CSV + Excel
-│   │   ├── config.yaml
-│   │   └── converter.py
 │   ├── adp_conf_to_excel/       # 弘积 ADP 配置 → Excel
-│   │   ├── config.yaml
-│   │   └── converter.py
-│   └── tests/                   # pytest 测试与样例配置
+│   └── tests/
+├── FW/                          # 防火墙配置解析工具
+│   ├── cisco_acl_parse/         # Cisco ASA 配置 → Excel + JSON
+│   ├── huawei_policy_parse/     # 华为 USG 配置 → Excel
+│   └── tests/
+├── Subnet/                      # 子网段生成工具
+│   ├── subnet_generator/        # IPv4/IPv6 子网生成 + 地址分配
+│   └── tests/
 ├── requirements.txt
 └── README.md
 ```
+
+每个工具的详细说明见各自目录下的 README：[LB](LB/README.md) ｜
+[FW](FW/README.md) ｜ [Subnet](Subnet/README.md)
 
 ## 环境要求
 
@@ -30,37 +38,39 @@ SmallTool/
 
 ## 快速开始
 
-所有命令均在仓库根目录下执行。
-
-**F5 BIG-IP 配置转换**（将 `bigip.conf` 放到当前目录）：
-
-```bash
-python -m LB.f5_conf_to_csv                    # 使用默认配置
-python -m LB.f5_conf_to_csv -c my-config.yaml  # 指定配置文件
-```
-
-**弘积 ADP 配置转换**（将 `startup-config` 放到当前目录）：
+所有命令均在仓库根目录下执行，每个工具由各自的 `config.yaml` 控制
+（`-c` 可指定其他配置文件）。
 
 ```bash
+# F5 BIG-IP 配置 → CSV + Excel（扫描当前目录 *.conf）
+python -m LB.f5_conf_to_csv
+
+# 弘积 ADP startup-config → Excel
 python -m LB.adp_conf_to_excel
-python -m LB.adp_conf_to_excel -c my-config.yaml
-```
 
-每个工具的行为由 YAML 配置文件控制，详见 [LB/README.md](LB/README.md)。
+# Cisco ASA 配置（Config/*.txt）→ Excel + JSON
+python -m FW.cisco_acl_parse
+
+# 华为 USG 配置（Config/*）→ Excel
+python -m FW.huawei_policy_parse
+
+# 子网段生成（命令行参数或 YAML 配置文件）
+python -m Subnet.subnet_generator --ipv4-base 10.8.242.0/24 --ipv4-prefix 29 --count 24
+```
 
 ## 运行测试
 
 ```bash
-python -m pytest LB/tests -v
+python -m pytest LB/tests FW/tests Subnet/tests -v
 ```
 
 ## 重构说明
 
-相比原仓库的改进：
+相比原项目的改进：
 
-- 统一使用 Python 3，配置由命令行参数/硬编码改为 YAML 文件
-- F5 工具移除了 pandas、sqlite3、xlsxwriter 依赖，仅使用标准库 csv + openpyxl
-- 两个工具共用同一个大括号配置块解析器（`LB/common/blockparser.py`）
-- 修复了原实现中 `str.lstrip()` 误用导致的字段解析错误、monitor/profile/persistence
-  名称错位、`cache-uri-include` 字段丢失等问题
+- 统一使用 Python 3，配置全部改为 YAML 文件
+- 移除了 pandas、sqlite3、xlsxwriter 依赖，仅使用标准库 csv + openpyxl
+- 两个 LB 工具共用同一个大括号配置块解析器（`LB/common/blockparser.py`）
+- 修复了原实现中的多处解析 bug（`str.lstrip()` 误用、名称字段错位、
+  `cache-uri-include` 字段丢失、华为服务集遇 `#` 不闭合等）
 - 补充了 pytest 测试与样例配置文件

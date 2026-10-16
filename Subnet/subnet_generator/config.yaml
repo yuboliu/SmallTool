@@ -1,0 +1,9 @@
+# 子网生成配置（相对路径基于运行命令时所在的目录）
+ipv4_base: "10.8.242.0/24"   # IPv4 基础网段（CIDR），不需要可删除该行
+ipv4_prefix: 29              # IPv4 目标前缀长度
+ipv6_base: "FC00:0:8:242::/120"  # IPv6 基础网段（CIDR），不需要可删除该行
+ipv6_prefix: 125             # IPv6 目标前缀长度
+count: 24                    # 生成子网数量
+switch_is_odd: true          # true: 交换机用奇数地址/防火墙用偶数；false: 反之
+output_file: "subnets.csv"   # 输出文件路径，删除该行则输出到终端
+output_format: "csv"         # 输出格式: csv / json / text

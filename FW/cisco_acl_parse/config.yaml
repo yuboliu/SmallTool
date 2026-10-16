@@ -1,0 +1,13 @@
+# Cisco ASA 防火墙配置解析设置
+# 相对路径基于运行命令时所在的目录
+input:
+  directory: "Config"   # 存放设备配置文件的目录
+  pattern: "*.txt"      # 配置文件匹配模式
+  encoding: "utf-8"
+output:
+  directory: "Output"   # 输出目录，每个设备生成 <设备名>.xlsx / .json
+  formats:
+    - excel
+    - json
+parse:
+  replace_object_group: true  # true: ACL 中的 object-group 引用展开为实际内容

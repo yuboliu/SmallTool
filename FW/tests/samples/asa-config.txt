@@ -1,0 +1,17 @@
+hostname asa-demo
+!
+object-group network OG-INSIDE
+ network-object 10.1.0.0 255.255.255.0
+ network-object host 10.1.1.5
+object-group network OG-SERVERS
+ network-object 172.16.0.0 255.255.0.0
+!
+object-group service OG-WEB tcp
+ port-object eq www
+ port-object eq https
+ port-object range 8000 8010
+!
+access-list OUTSIDE-IN extended permit tcp any object-group OG-INSIDE object-group OG-WEB
+access-list OUTSIDE-IN extended permit ip host 1.2.3.4 any
+access-list OUTSIDE-IN extended deny tcp 192.168.0.0 255.255.255.0 host 203.0.113.5 eq ssh
+!
