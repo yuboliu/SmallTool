@@ -2,8 +2,8 @@
 
 网络运维小工具合集。本项目由以下两个仓库合并重构而来：
 
-- [f5-conf-to-csv](https://github.com/yuboliu/f5-conf-to-csv)（已归档删除）
-- [Horizon-ADP_Conf-To-Excel](https://github.com/yuboliu/Horizon-ADP_Conf-To-Excel)（已归档删除）
+- f5-conf-to-csv（已合并至此仓库）
+- Horizon-ADP_Conf-To-Excel（已合并至此仓库）
 
 ## 目录结构
 
