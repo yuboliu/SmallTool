@@ -26,12 +26,22 @@ def configs():
 
 @pytest.fixture(scope="module")
 def rules(configs):
-    return configs["ASA1.json"]["acl_rules"]
+    return configs["ASA1.json"]["rules"]
 
 
 def test_load_config_files(configs):
     assert "ASA1.json" in configs
-    assert len(configs["ASA1.json"]["acl_rules"]) == 3
+    assert configs["ASA1.json"]["metadata"]["vendor"] == "cisco"
+    assert len(configs["ASA1.json"]["rules"]) == 3
+
+
+def test_normalize_firewall_address_forms():
+    from Emulation.traffic_emulator.emulator import _first_host
+    # Huawei raw "ip mask len" form
+    assert _first_host("203.0.113.10 mask 32") == "203.0.113.10/32"
+    assert _first_host("10.1.0.0 mask 24") == "10.1.0.1/32"
+    # range form reduces to its start address
+    assert _first_host("172.16.1.1 - 172.16.1.10") == "172.16.1.1/32"
 
 
 def test_extract_configs_dst_ips(configs):
@@ -118,3 +128,56 @@ def test_run_exports_plan_without_interface_setup(tmp_path, monkeypatch):
         plan = yaml.safe_load(fh)
     assert len(plan) == 4  # only OUTSIDE-IN: 2 dst x 2 ports
     assert list((tmp_path / "logs").glob("traffic_emulator_*.log"))
+
+
+def _free_port(sock_type):
+    import socket
+    sock = socket.socket(socket.AF_INET, sock_type)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
+def test_sender_receiver_roundtrip(tmp_path):
+    """B/S roundtrip: receiver logs what the sender replays from a plan."""
+    import socket
+    import threading
+    import time
+
+    from Emulation.traffic_emulator.receiver import Receiver, derive_ports
+    from Emulation.traffic_emulator.sender import send_plan
+
+    tcp_port = _free_port(socket.SOCK_STREAM)
+    udp_port = _free_port(socket.SOCK_DGRAM)
+    log_file = tmp_path / "received.jsonl"
+
+    plan = [
+        {"src_ip": "127.0.0.1/32", "dst_ip": "127.0.0.1/32",
+         "dst_port": str(tcp_port), "protocol": "tcp"},
+        {"src_ip": "127.0.0.1/32", "dst_ip": "127.0.0.1/32",
+         "dst_port": str(udp_port), "protocol": "udp"},
+        {"src_ip": "127.0.0.1/32", "dst_ip": "127.0.0.1/32",
+         "dst_port": "0", "protocol": "icmp"},
+    ]
+
+    assert derive_ports(plan) == ([tcp_port], [udp_port])
+
+    receiver = Receiver("127.0.0.1", [tcp_port], [udp_port], log_file)
+    thread = threading.Thread(target=receiver.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.3)
+
+    report = send_plan(plan, timeout=1.0)
+    time.sleep(0.5)
+    receiver.stop()
+    thread.join(timeout=3)
+
+    results = [r["result"] for r in report]
+    assert results == ["reachable", "sent", "skipped"]
+
+    records = [json.loads(line)
+               for line in log_file.read_text(encoding="utf-8").splitlines()]
+    protocols = {(r["protocol"], r["dst_port"]) for r in records}
+    assert ("tcp", tcp_port) in protocols
+    assert ("udp", udp_port) in protocols

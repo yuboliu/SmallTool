@@ -1,19 +1,30 @@
 # 流量仿真测试设置
 # 相对路径基于运行命令时所在的目录
 input:
-  directory: "ConfigExport"  # FW.cisco_acl_parse 导出的 JSON 所在目录
+  directory: "ConfigExport"  # 标准规则 JSON 所在目录（见 Emulation/README.md 格式说明）
   pattern: "*.json"
   encoding: "utf-8"
 emulation:
-  rules: []                  # 只仿真这些 ACL 规则名；空列表 = 全部规则
+  rules: []                  # 只仿真这些规则名；空列表 = 全部规则
   address_field: "dst_address"  # 用源地址还是目的地址配置接口: src_address / dst_address
-  any_ip_replacement:        # ACL 中 any 的替换地址（测试网段）
+  any_ip_replacement:        # 规则中 any 的替换地址（测试网段）
     src: "192.0.2.1/32"
     dst: "198.51.100.1/32"
   base_interface: "eth0"     # ipvlan 子接口的父接口
   setup_interfaces: false    # true = 在 Linux 上配置 ipvlan 接口（需 root）
 output:
   file: "traffic_plan.yaml"  # 测试流量计划输出文件，.json 后缀则输出 JSON
+sender:                      # 发送端（B/S 架构的 Client）
+  plan_file: "traffic_plan.yaml"
+  timeout: 2.0               # TCP 连接超时秒数
+  bind_source: false         # 绑定计划中的 src_ip 作为源地址（需本机接口已配置该地址）
+  report_file: "send_report.yaml"  # 发送结果报告，.json 后缀则输出 JSON
+receiver:                    # 接收端（B/S 架构的 Server）
+  host: "0.0.0.0"
+  tcp_ports: []              # 监听的 TCP 端口；与 udp_ports 都为空时从 plan_file 推导
+  udp_ports: []              # 监听的 UDP 端口
+  plan_file: "traffic_plan.yaml"
+  log_file: "logs/received.jsonl"  # 到达流量日志（JSON Lines）
 logging:
   console: true
   directory: "logs"

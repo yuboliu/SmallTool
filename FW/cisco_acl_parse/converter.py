@@ -300,15 +300,17 @@ def write_to_excel(output_path: Path, networks: dict, services: dict,
 
 def export_to_json(output_path: Path, device_name: str, networks: dict,
                    services: dict, acl_rules: list) -> Path:
-    """Export structured config data to a JSON file."""
+    """Export structured config data in the standard rule JSON format
+    (consumed by Emulation/traffic_emulator; see Emulation/README.md)."""
     config_data = {
         "metadata": {
             "device_name": device_name,
+            "vendor": "cisco",
             "export_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         },
         "network_groups": networks,
         "service_groups": services,
-        "acl_rules": acl_rules,
+        "rules": acl_rules,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as fh:

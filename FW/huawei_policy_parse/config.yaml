@@ -5,4 +5,7 @@ input:
   pattern: "*"          # 配置文件匹配模式
   encoding: "utf-8"
 output:
-  directory: "Output"   # 输出目录，每个设备生成 <设备名>.xlsx
+  directory: "Output"   # 输出目录，每个设备生成 <设备名>.xlsx / <设备名>.json
+  formats:              # 输出格式：excel 工作簿 / json（标准规则 JSON，供流量仿真工具使用）
+    - excel
+    - json

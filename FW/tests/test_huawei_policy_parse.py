@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,33 @@ def test_process_config_file_writes_excel(tmp_path):
     sheet = workbook["安全策略-关联"]
     assert sheet.cell(row=1, column=1).value == "规则名称"
     assert sheet.cell(row=2, column=1).value == "ALLOW-WEB"
+
+
+def test_process_config_file_writes_standard_json(tmp_path):
+    process_config_file(SAMPLE, tmp_path, formats=["json"])
+    json_path = tmp_path / "usg-config.json"
+    assert json_path.exists()
+    with open(json_path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    assert data["metadata"]["device_name"] == "usg-config"
+    assert data["metadata"]["vendor"] == "huawei"
+    assert len(data["address_sets"]) == 2
+
+    rules = data["rules"]
+    assert len(rules) == 2
+    allow = rules[0]
+    assert allow["name"] == "ALLOW-WEB"
+    assert allow["action"] == "permit"
+    assert allow["protocol"] == "tcp"
+    assert allow["dst_port"] == "80\n443\n8000-8010"
+    assert allow["src_address"] == (
+        "10.1.0.0/24\n192.168.1.10/32\n172.16.1.1 - 172.16.1.10")
+    assert allow["dst_address"] == "203.0.113.10 mask 32"
+    assert allow["source_zone"] == "trust"
+    deny = rules[1]
+    assert deny["protocol"] == "tcp"
+    assert deny["dst_port"] == "3389"
+    assert deny["src_address"] == "172.18.0.0/24"
 
 
 def test_run_with_yaml_config(tmp_path, monkeypatch):

@@ -1,11 +1,12 @@
 {
   "metadata": {
     "device_name": "ASA1",
+    "vendor": "cisco",
     "export_time": "2025-01-01 00:00:00"
   },
   "network_groups": {},
   "service_groups": {},
-  "acl_rules": [
+  "rules": [
     {
       "name": "OUTSIDE-IN",
       "type": "extended",

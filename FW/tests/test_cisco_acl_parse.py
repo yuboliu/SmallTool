@@ -89,7 +89,9 @@ def test_process_config_file_writes_excel_and_json(tmp_path):
     with open(json_path, encoding="utf-8") as fh:
         data = json.load(fh)
     assert data["metadata"]["device_name"] == "asa-config"
-    assert len(data["acl_rules"]) == 3
+    assert data["metadata"]["vendor"] == "cisco"
+    assert len(data["rules"]) == 3
+    assert data["rules"][0]["dst_address"] == "10.1.0.0/24\n10.1.1.5/32"
     assert data["network_groups"]["OG-INSIDE"] == ["10.1.0.0/24", "10.1.1.5/32"]
 
 

@@ -19,6 +19,7 @@ import ipaddress
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime
@@ -81,15 +82,50 @@ def load_config_files(config_directory: Path, pattern: str = "*.json",
         try:
             with open(filepath, encoding=encoding) as fh:
                 config_data = json.load(fh)
-            loaded_configs[filepath.name] = config_data
+            loaded_configs[filepath.name] = normalize_config(config_data)
         except (OSError, json.JSONDecodeError) as exc:
             if logger:
                 logger.error("Error loading %s: %s", filepath, exc)
     return loaded_configs
 
 
+def normalize_config(config_data: dict) -> dict:
+    """Validate and normalize a rule JSON file to the standard structure.
+
+    Only the standard format is supported — producers (firewall parsers,
+    other vendors, hand-written files) must emit::
+
+        {"metadata": {"device_name": ..., "vendor": ...},
+         "rules": [{"name", "action", "protocol",
+                    "src_address", "dst_address", "dst_port"}, ...]}
+
+    Extra keys are preserved; a missing ``rules`` key yields an empty list.
+    """
+    normalized = dict(config_data)
+    normalized["rules"] = list(normalized.get("rules") or [])
+    return normalized
+
+
+def _normalize_address(address: str) -> str:
+    """Normalize common firewall address forms to CIDR-ish strings.
+
+    - ``203.0.113.10 mask 32`` (Huawei raw form) -> ``203.0.113.10/32``
+    - ``172.16.1.1 - 172.16.1.10`` (range form) -> ``172.16.1.1/32`` (start)
+    """
+    mask_match = re.match(r"^([\da-fA-F:.]+)\s+mask\s+(\d+)$", address)
+    if mask_match:
+        return f"{mask_match.group(1)}/{mask_match.group(2)}"
+    range_match = re.match(r"^([\da-fA-F:.]+)\s+-\s+[\da-fA-F:.]+$", address)
+    if range_match:
+        start = range_match.group(1)
+        suffix = 128 if ":" in start else 32
+        return f"{start}/{suffix}"
+    return address
+
+
 def _first_host(address: str) -> str:
     """Return the first host of a network as a /32 (or /128), else *address*."""
+    address = _normalize_address(address)
     try:
         network = ipaddress.ip_network(address, strict=False)
     except ValueError:
@@ -142,7 +178,7 @@ def extract_configs(config_dict: dict, any_ip_replacement: dict,
     for config in config_dict.values():
         if isinstance(config, dict):
             _extract_address(config)
-            acl_rules.extend(config.get("acl_rules", []))
+            acl_rules.extend(config.get("rules", []))
     return ip_addresses, acl_rules
 
 

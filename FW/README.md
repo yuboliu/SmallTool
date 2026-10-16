@@ -6,8 +6,12 @@
 
 | 工具 | 设备 | 输入 | 输出 |
 |---|---|---|---|
-| `cisco_acl_parse` | Cisco ASA | `Config/*.txt` | Excel（地址组/服务组/ACL规则）+ JSON |
-| `huawei_policy_parse` | 华为 USG | `Config/*` | Excel（地址集/服务集/安全策略） |
+| `cisco_acl_parse` | Cisco ASA | `Config/*.txt` | Excel（地址组/服务组/ACL规则）+ 标准规则 JSON |
+| `huawei_policy_parse` | 华为 USG | `Config/*` | Excel（地址集/服务集/安全策略）+ 标准规则 JSON |
+
+两个工具的 JSON 输出均为**标准规则 JSON 格式**（`metadata` + `rules`，
+`metadata.vendor` 分别为 `cisco` / `huawei`），可直接作为
+[Emulation/traffic_emulator](../Emulation/README.md) 流量仿真测试工具的输入。
 
 ## cisco_acl_parse
 
@@ -42,6 +46,9 @@ parse:
 - `ip service-set` → 服务集
 - `security-policy` → 安全策略
 - 「安全策略-关联」工作表：策略中的地址集/服务集引用展开为实际内容
+- JSON 导出：规则取自关联后的策略（引用已展开），服务字符串
+  （`tcp 80`、`tcp 8000 to 8010`、`protocol tcp destination-port 3389`）
+  自动拆分为 `protocol` + `dst_port`
 
 配置文件 `config.yaml`：
 
@@ -51,7 +58,8 @@ input:
   pattern: "*"
   encoding: "utf-8"
 output:
-  directory: "Output"   # 每个设备生成 <设备名>.xlsx
+  directory: "Output"   # 每个设备生成 <设备名>.xlsx / <设备名>.json
+  formats: [excel, json]
 ```
 
 运行：`python -m FW.huawei_policy_parse [-c config.yaml]`
@@ -68,5 +76,5 @@ python -m pytest FW/tests -v
 - 华为工具移除了 pandas 依赖，直接使用 openpyxl 写 Excel
 - 提取函数改为接收配置文本而非文件路径，便于测试
 - 修复了服务集在遇到 `#` 分节符时不闭合、导致策略内 service 行误入服务集的问题
-- 原项目中的 `lib/cisco_lib.py`（Linux 测试流量仿真库，需 root 配置 veth 接口）
-  与配置解析无关，未纳入本仓库
+- 原项目中的 `lib/cisco_lib.py` 已独立拆分为
+  [Emulation/traffic_emulator](../Emulation/README.md) 流量仿真测试工具
