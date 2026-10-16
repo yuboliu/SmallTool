@@ -1,0 +1,11 @@
+# F5 BIG-IP LTM 配置转换设置
+# 相对路径基于运行命令时所在的目录
+input:
+  directory: "."        # 扫描配置文件的目录
+  pattern: "*.conf"     # 输入文件匹配模式
+  encoding: "utf-8"
+output:
+  directory: "Output"   # 输出根目录，每个输入文件生成一个子目录
+  formats:              # 输出格式，可选: csv, excel
+    - csv
+    - excel

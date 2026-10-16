@@ -1,0 +1,7 @@
+# 弘积 ADP 负载均衡配置转换设置
+# 相对路径基于运行命令时所在的目录
+input:
+  file: "startup-config"  # ADP 设备导出的启动配置文件
+  encoding: "utf-8"
+output:
+  file: "output.xlsx"     # 输出的 Excel 工作簿

@@ -1,0 +1,35 @@
+hostname adp-demo
+!
+ip nat pool natpool1 {
+  start 10.1.1.1
+  end 10.1.1.10
+  netmask 255.255.255.0
+}
+health check hc_tcp interval 5 retry 3 timeout 3 up-check-cnt 2 {
+  method tcp
+  port 80
+  wait-all-retry
+}
+slb pool pool_web tcp {
+  member 192.168.1.1:80
+  member 192.168.1.2:80
+  health-check hc_tcp
+}
+slb profile tcp tcp_prof {
+  idle-timeout 300
+  tcp-keepalive
+}
+slb profile persist source-ip persist_src {
+  timeout 600
+}
+slb virtual-address 10.10.10.10 {
+  port 80 tcp {
+    pool pool_web
+    persist persist_src
+    description %u6D4B%u8BD5
+  }
+  port 443 tcp {
+    pool pool_web
+  }
+  enable
+}
