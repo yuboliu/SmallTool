@@ -1,0 +1,19 @@
+# 流量仿真测试设置
+# 相对路径基于运行命令时所在的目录
+input:
+  directory: "ConfigExport"  # FW.cisco_acl_parse 导出的 JSON 所在目录
+  pattern: "*.json"
+  encoding: "utf-8"
+emulation:
+  rules: []                  # 只仿真这些 ACL 规则名；空列表 = 全部规则
+  address_field: "dst_address"  # 用源地址还是目的地址配置接口: src_address / dst_address
+  any_ip_replacement:        # ACL 中 any 的替换地址（测试网段）
+    src: "192.0.2.1/32"
+    dst: "198.51.100.1/32"
+  base_interface: "eth0"     # ipvlan 子接口的父接口
+  setup_interfaces: false    # true = 在 Linux 上配置 ipvlan 接口（需 root）
+output:
+  file: "traffic_plan.yaml"  # 测试流量计划输出文件，.json 后缀则输出 JSON
+logging:
+  console: true
+  directory: "logs"

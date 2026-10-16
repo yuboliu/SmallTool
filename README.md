@@ -23,12 +23,15 @@ SmallTool/
 ├── Subnet/                      # 子网段生成工具
 │   ├── subnet_generator/        # IPv4/IPv6 子网生成 + 地址分配
 │   └── tests/
+├── Emulation/                   # 流量仿真测试工具
+│   ├── traffic_emulator/        # ACL 规则 → 测试流量计划 + Linux 接口配置
+│   └── tests/
 ├── requirements.txt
 └── README.md
 ```
 
 每个工具的详细说明见各自目录下的 README：[LB](LB/README.md) ｜
-[FW](FW/README.md) ｜ [Subnet](Subnet/README.md)
+[FW](FW/README.md) ｜ [Subnet](Subnet/README.md) ｜ [Emulation](Emulation/README.md)
 
 ## 环境要求
 
@@ -56,12 +59,15 @@ python -m FW.huawei_policy_parse
 
 # 子网段生成（命令行参数或 YAML 配置文件）
 python -m Subnet.subnet_generator --ipv4-base 10.8.242.0/24 --ipv4-prefix 29 --count 24
+
+# 流量仿真：ACL JSON → 测试流量计划（可选 Linux 接口配置）
+python -m Emulation.traffic_emulator
 ```
 
 ## 运行测试
 
 ```bash
-python -m pytest LB/tests FW/tests Subnet/tests -v
+python -m pytest LB/tests FW/tests Subnet/tests Emulation/tests -v
 ```
 
 ## 重构说明

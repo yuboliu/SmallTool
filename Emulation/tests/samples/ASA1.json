@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "device_name": "ASA1",
+    "export_time": "2025-01-01 00:00:00"
+  },
+  "network_groups": {},
+  "service_groups": {},
+  "acl_rules": [
+    {
+      "name": "OUTSIDE-IN",
+      "type": "extended",
+      "action": "permit",
+      "protocol": "tcp",
+      "src_address": "any",
+      "dst_address": "10.1.0.0/24\n10.1.1.5/32",
+      "dst_port": "80\n443",
+      "other_config": ""
+    },
+    {
+      "name": "MGMT",
+      "type": "extended",
+      "action": "permit",
+      "protocol": "tcp",
+      "src_address": "192.168.1.0/24",
+      "dst_address": "172.16.0.10/32",
+      "dst_port": "22",
+      "other_config": ""
+    },
+    {
+      "name": "APP-RANGE",
+      "type": "extended",
+      "action": "permit",
+      "protocol": "udp",
+      "src_address": "10.2.0.0/24",
+      "dst_address": "any",
+      "dst_port": "17001-17003",
+      "other_config": ""
+    }
+  ]
+}
